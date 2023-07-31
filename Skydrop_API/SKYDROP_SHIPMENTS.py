@@ -5,34 +5,39 @@ from dateutil.parser import parse
 import requests
 import os
 load_dotenv()
+#Obtain the Mongo Conection String and DB
 MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
 MongoLocalHost=os.environ.get('MongoLocalConnectionHost')
 MongoLocalServer=os.environ.get('MongoLocalConnectionServer')
+#Select Local Db or Online Cluster
 client = MongoClient(MongoOnlineConnection)
 #client=MongoClient(f'{MongoLocalHost}', int(MongoLocalServer))
+#Obtian Credentials
 access_token=os.environ.get('SKYDROP_ACCESS_TOKEN')
 cnn = client["GAON_SKYDROP"]
-
-def obtain_shipments(cnn,access_token):
+def obtain_shipments(cnn,access_token):#Function for Obtaining Shipments from Skydrop API
     collection = cnn["Shipments"]
-    url="https://radar-api.skydropx.com/v1/shipments"
+    url="https://radar-api.skydropx.com/v1/shipments"#Url
+    #Header for authorization token
     headers = {
         "Authorization": f"Token token={access_token}",
         "content-type": "application/json"
     }
-    response = requests.get(url, headers=headers)
-    orders = response.json()
-    page_max=orders['meta']['total_pages']
+    response = requests.get(url, headers=headers)#Get request
+    orders = response.json()#Converting the response to JSON format
+    page_max=orders['meta']['total_pages']#Consulting Page limit for while condition
     page=0
-    while page<=page_max:
-        page = orders['meta']['current_page']
-        for shipment in orders['shipments']:
+    while page<=page_max:#While Condition,makes sure that each shipment is obtained.
+        page = orders['meta']['current_page']#Identifies the current page
+        for shipment in orders['shipments']:#for loop for obtaining information an each shipment order
+            #Shipment Information
             date_created = shipment['created_at']
             shipment_id = shipment['id']
             client_name = shipment['addresses']['address_to']['name']
             destination = shipment['addresses']['address_to']['street1']
             status = shipment['status']
             date_created = parse(date_created)
+            #Creates the table format of each shipment 
             order_data = {
                 "Shipment_ID": shipment_id,
                 "Client_Name": client_name,
@@ -40,9 +45,10 @@ def obtain_shipments(cnn,access_token):
                 "Status": status,
                 "Date_Created": date_created
             }
+            #Updates or Inserts each shipment to DB
             collection.replace_one({"Shipment_ID": order_data["Shipment_ID"]}, order_data, upsert=True)
+        #Generates a new API request for next page
         url = f"https://radar-api.skydropx.com/v1/shipments?page={page + 1}"
         response = requests.get(url, headers=headers)
         orders = response.json()
-
 obtain_shipments(cnn,access_token)
