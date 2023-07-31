@@ -4,6 +4,7 @@ from dotenv import load_dotenv, set_key
 from dateutil.parser import parse
 import requests
 import os
+#Load .env file
 load_dotenv()
 #Obtain the Mongo Conection String and DB
 MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
