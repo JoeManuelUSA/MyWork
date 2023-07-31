@@ -1,8 +1,9 @@
-#This code obtains the general sales by month of Walmart
-#Sales Information is obtained from Mongo DB
 from datetime import datetime, timedelta
 from pymongo import MongoClient
-client = MongoClient("mongodb+srv://olimpo:0limpo_soft@olimpo.18mvdkl.mongodb.net/")
+from dotenv import load_dotenv
+#Obtain Mongo Connection String
+MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
+client = MongoClient(MongoOnlineConnection)
 cnn = client["GAON_WMT"]
 def importar_historico_WMT(cnn,mes_inicial, mes_final):
     collection = cnn["Sale_Detail_Package"]
