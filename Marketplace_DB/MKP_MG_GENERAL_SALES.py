@@ -1,12 +1,16 @@
+#This code Obtaines
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from dotenv import load_dotenv, set_key
 import os
+#Load .env file
 load_dotenv()
+#Obtain Mongo connection string
 MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
 client = MongoClient(MongoOnlineConnection)
 cnn1 = client["GAON_MLB"]
 cnn2= client['GAON_WMT']
+
 def importar_historico_WMT(cnn,mes_inicial, mes_final):
     collection = cnn["Sale_Detail_Package"]
     pipeline_month = [
@@ -39,7 +43,7 @@ def importar_historico_WMT(cnn,mes_inicial, mes_final):
         a += total_quantity
         results_list.append((year, month, total_quantity))
     return results_list, a
-def importar_historico_MLB1(cnn,mes_inicial, mes_final):
+def importar_historico_MLB(cnn,mes_inicial, mes_final):
     collection = cnn["Sale_Detail_Package"]
     pipeline_month = [
         # First stage: filter the documents
@@ -76,7 +80,7 @@ def importar_historico_MLB1(cnn,mes_inicial, mes_final):
         a += total_quantity
         results_list.append((year, month, total_quantity))
     return results_list, a
-def importar_historico_MLB(cnn,mes_inicial, mes_final):
+
     collection = cnn["Sale_Detail"]
     pipeline_month = [
         # First stage: filter the documents
@@ -121,9 +125,7 @@ MLB_dia_mes_final=datetime(2023,6,1)
 # Convert CDMX time range to UTC
 MLB_dia_mes_inicial_utc = MLB_dia_mes_inicial - timedelta(hours=cdmx_time_zone_diff_hours)
 MLB_dia_mes_final_utc = MLB_dia_mes_final - timedelta(hours=cdmx_time_zone_diff_hours)
-
-
-
+#Walmart Start and End date
 WMT_dia_mes_inicial=datetime(2023,5,1)
 WMT_dia_mes_final=datetime(2023,6,1)
 

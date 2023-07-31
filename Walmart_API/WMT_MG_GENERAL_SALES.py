@@ -1,12 +1,16 @@
+#This code obtains the general sales by month of Walmart
+#The sales data is obtianed from MongoDB
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from dotenv import load_dotenv
+#load .env file
+load_dotenv()
 #Obtain Mongo Connection String
 MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
 client = MongoClient(MongoOnlineConnection)
-cnn = client["GAON_WMT"]
-def importar_historico_WMT(cnn,mes_inicial, mes_final):#Imports Historic Walmart Sales
-    collection = cnn["Sale_Detail_Package"]
+cnn = client["GAON_WMT"]#Selects MONGO DB
+def import_historic_WMT(cnn,mes_inicial, mes_final):#Imports Historic Walmart Sales
+    collection = cnn["Sale_Detail_Package"]#Selects Collection from MongoDB
     pipeline_month = [
         # First stage: filter the documents
         {
@@ -40,8 +44,7 @@ def importar_historico_WMT(cnn,mes_inicial, mes_final):#Imports Historic Walmart
 
 mes_inicial=datetime(2023,5,1)#Starting Date
 mes_final=datetime(2023,6,1)#End date
-result_general_WMT,WMT_Total=importar_historico_WMT(cnn,mes_inicial,mes_final)
+result_general_WMT,WMT_Total=import_historic_WMT(cnn,mes_inicial,mes_final)
 print(result_general_WMT)
 print(WMT_Total)
 
-#

@@ -4,7 +4,7 @@ import requests
 import uuid
 from dotenv import load_dotenv, set_key
 import os
-#Load .env
+#Load .env file
 load_dotenv()
 #Obtain URL request,api key and secret key
 url = os.environ.get('url_token')
@@ -15,7 +15,7 @@ credentials = f"{api_key}:{secret_key}"
 encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
 # Generate a random UUID for WM_QOS.CORRELATION_ID
 correlation_id = str(uuid.uuid4())
-headers = { #Autorization Header
+headers = { #Authorization Header
     "Authorization": f"Basic {encoded_credentials}",
     "Accept":"application/json",
     "WM_QOS.CORRELATION_ID": correlation_id,

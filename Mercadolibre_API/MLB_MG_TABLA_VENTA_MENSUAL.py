@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from dateutil.parser import parse
-client = MongoClient("mongodb+srv://olimpo:0limpo_soft@olimpo.18mvdkl.mongodb.net/")
+from dotenv import load_dotenv
+import os
+load_dotenv()
+MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
+client = MongoClient(MongoOnlineConnection)
 cnn = client["GAON_MLB"]
 def importar_historico_producto(cnn,mes_inicial, mes_final):
     collection = cnn["Sale_Detail_Package"]
