@@ -1,3 +1,5 @@
+#This code obtains the general sales by month of Walmart
+#Sales Information is obtained from Mongo DB
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 client = MongoClient("mongodb+srv://olimpo:0limpo_soft@olimpo.18mvdkl.mongodb.net/")
