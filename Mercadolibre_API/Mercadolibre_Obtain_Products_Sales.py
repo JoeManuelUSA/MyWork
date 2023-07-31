@@ -1,3 +1,5 @@
+#This code obtains the products and sale data from Wallmart API and stores the information to MONGO DB
+#Also obtains subcategorys,categorys,and stores
 import requests
 import datetime
 from datetime import datetime, timedelta
@@ -7,21 +9,16 @@ from pymongo import MongoClient
 from dateutil.parser import parse
 from dotenv import load_dotenv, set_key
 import os
-load_dotenv()
 from pymongo import UpdateOne
+load_dotenv()
 #Obtain credentials
 access_token =os.environ.get('Token_MLB')
 seller_id=os.environ.get('MLB_Seller_ID')
-#Obtiene el enlace de conexion a Mongo DB,ya sea local o al cluster
+#Obtian Mongo Connection String
 MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
-MongoLocalHost=os.environ.get('MongoLocalConnectionHost')
-MongoLocalServer=os.environ.get('MongoLocalConnectionServer')
-#Elecion de Base de Datos, Local o Cluster
 client = MongoClient(f"{MongoOnlineConnection}")
-#client=MongoClient(f'{MongoLocalHost}', int(MongoLocalServer))
 cnn=client["GAON_MLB"]
-shipping_list=[]
-def inserta_actualiza_categoria(cnn, access_token):  # Inserta/Actualiza la categoria
+def inserta_actualiza_categoria(cnn, access_token):  # Insert/Update Category
     if "Categories" in cnn.list_collection_names():
         collection = cnn["Categories"]
     else:
@@ -38,7 +35,7 @@ def inserta_actualiza_categoria(cnn, access_token):  # Inserta/Actualiza la cate
         filter = {"Category_ID": Categoria}
         doc = {"Category_ID": Categoria, "Name": Nombre}
         collection.replace_one(filter, doc, upsert=True)
-def inserta_actualiza_tienda(cnn, access_token,seller_id):
+def inserta_actualiza_tienda(cnn, access_token,seller_id):# Insert/Update Store
     collection = cnn["Stores"]
     headers = {"Authorization": f"Bearer {access_token}"}
     url = f"https://api.mercadolibre.com/users/{seller_id}/brands"
@@ -53,27 +50,26 @@ def inserta_actualiza_tienda(cnn, access_token,seller_id):
         filter = {"Store_ID": store_id}
         doc = {"Store_ID": store_id, "Name": nombre, "Fantasy_Name": fantasy_name, "Status": status,"Permalink": permalink}
         collection.replace_one(filter, doc, upsert=True)
-def get_or_insert_category(subcategories_collection, Sub_Category_ID, Name_Category, Category_ID):
+def get_or_insert_category(subcategories_collection, Sub_Category_ID, Name_Category, Category_ID):# Insert/Update SubCategory
     filter = {"Sub_Category_ID": Sub_Category_ID}
     doc = {"Category_ID": Category_ID, "Sub_Category_ID": Sub_Category_ID, "Name": Name_Category}
     subcategories_collection.replace_one(filter, doc, upsert=True)
-def get_item_details(MLM, headers):
+def get_item_details(MLM, headers):# Obtain Product Information
     url = f"https://api.mercadolibre.com/items/{MLM}"
     response = requests.get(url, headers=headers)
     data = response.json()
     return data
-def get_shipping_details(buyer, headers):
+def get_shipping_details(buyer, headers):#Obtain Shipping Information
     url = f"https://api.mercadolibre.com/shipments/{buyer}"
     response = requests.get(url, headers=headers)
     data = response.json()
     return data
-def get_shipping_cost(Shipping_ID, headers):
+def get_shipping_cost(Shipping_ID, headers):#Obtain Shipping Cost
     url = f"https://api.mercadolibre.com/shipments/{Shipping_ID}"
     response = requests.get(url, headers=headers)
     data = response.json()
     # data = data.get("shipping_option", {}).get("list_cost", 0)
     return data
-def consulta_shipping_details(cnn, access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
     if "Buyer_Information" in cnn.list_collection_names():
         buyer_collection = cnn["Buyer_Information"]
@@ -104,7 +100,12 @@ def consulta_shipping_details(cnn, access_token):
             except:
                 continue
             return Buyer_Information
-def consulta_productos(cnn, access_token,seller_id):
+def obtain_partial_refund(Order_ID,headers):#Obtain Product refund
+    url=f"https://api.mercadolibre.com/orders/{Order_ID}"
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    return data
+def consulta_productos(cnn, access_token,seller_id):#Consult Products
     if "Sub_Categories" in cnn.list_collection_names():
         subcategories_collection = cnn["Sub_Categories"]
     else:
@@ -198,13 +199,7 @@ def consulta_productos(cnn, access_token,seller_id):
         }
 
         products_collection.replace_one(filter, doc, upsert=True)
-
-def obtain_partial_refund(Order_ID,headers):
-    url=f"https://api.mercadolibre.com/orders/{Order_ID}"
-    response = requests.get(url, headers=headers)
-    data = response.json()
-    return data
-def consulta_detalle_venta(cnn, access_token,seller_id, start_date, end_date):
+def consulta_detalle_venta(cnn, access_token,seller_id, start_date, end_date):#Consult Sale data by Date
     if isinstance(start_date, str):
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
     if isinstance(end_date, str):
@@ -332,7 +327,7 @@ def consulta_detalle_venta(cnn, access_token,seller_id, start_date, end_date):
                 print(f"Error: {response.status_code}, {response.text}")
                 more_results = False
     return shipping_list
-def aggregate_orders(cnn,shipping_list):
+def aggregate_orders(cnn,shipping_list):#Creates Sale Package
     if "Sale_Detail_Package" in cnn.list_collection_names():
         new_collection = cnn["Sale_Detail_Package"]
     else:
@@ -403,88 +398,21 @@ def aggregate_orders(cnn,shipping_list):
             for order_data in grouped_orders:
                 new_collection.replace_one({"Shipping_ID": shipping_id}, order_data, upsert=True)
     return aux
-def aggregate_orders2(cnn):
-    collection = cnn["Sale_Detail"]
-    pipeline = [
-        {
-            "$sort": {"Shipping_ID": 1, "Date_Created": 1}  # Sort by Shipping_ID and Date_Created
-        },
-        {
-            "$group": {
-                "_id": "$Shipping_ID",  # Group by Shipping_ID
-                "Status": {
-                    "$first": "$Status"  # Push the entire document into Orders array
-                },
-                "Shipping_ID": {
-                    "$first": "$Shipping_ID"  # Push the entire document into Orders array
-                },
-                "Date_Created": {
-                    "$first": "$Date_Created"  # Push the entire document into Orders array
-                },
-                "Date_Approved": {
-                    "$first": "$Date_Approved"  # Push the entire document into Orders array
-                },
-                "Orders": {
-                    "$push": "$$ROOT"  # Push the entire document into Orders array
-                },
-                "Total_Paid_Amount": {
-                    "$sum": "$Total_Paid_Amount"  # Sum Total_Paid_Amount
-                },
-                "Total_Sale_Fee": {
-                    "$sum": "$Total_Sale_Fee"  # Sum Sale_Fee
-                },
-                "Shipping_Cost": {
-                    "$first": "$Shipping_Cost"  # Get the first occurrence of Shipping_Cost
-                },
-            }
-        },
-        {
-            "$addFields": {
-                "Final_Amount": {
-                    "$subtract": [
-                        "$Total_Paid_Amount",
-                        {"$add": ["$Total_Sale_Fee", "$Shipping_Cost"]}
-                    ]
-                }
-            }
-        },
-        {
-            "$project": {
-                "Shipping_ID": 1,
-                "Status": 1,
-                "Date_Created": 1,
-                "Date_Approved": 1,
-                "Orders": 1,
-                "Total_Paid_Amount": 1,
-                "Total_Sale_Fee": 1,
-                "Shipping_Cost": 1,
-                "Final_Amount": 1
-            }
-        },
-        {
-            "$out": "Sale_Detail_Package"  # Output to a new collection
-        }
-    ]
-    collection.aggregate(pipeline)
-
 print("Mercadolibre API GAON")
-#print("Consultando Categoria y Tienda")
-#inserta_actualiza_tienda(cnn,access_token,seller_id)
-#inserta_actualiza_categoria(cnn,access_token)
-#print("Consultando productos")
-#consulta_productos(cnn,access_token,seller_id)
-start_date = "2022-12-31"  # or datetime(2023, 1, 1)
-end_date = "2023-1-2"  # or datetime(2023, 1, 31)
+print("Consulting Categories and Stores")
+inserta_actualiza_tienda(cnn,access_token,seller_id)
+inserta_actualiza_categoria(cnn,access_token)
+print("Consulting Products")
+consulta_productos(cnn,access_token,seller_id)
+start_date = "2022-12-31"  # Start Date
+end_date = "2023-1-2"  # End Date
 try:
-    print("Consultando ventas")
+    print("Consulting Sales")
+    shipping_list=[]
     shipping_list=consulta_detalle_venta(cnn, access_token,seller_id, start_date, end_date)
-    #print(shipping_list)
 except Exception as e:
-    print(f'Error in consulta_detalle_venta: {e}')
+    print(f'Error Consulting Sales: {e}')
 finally:
-    print("Numero de Shipping_Id:", len(shipping_list))
-    print("Realizando Paquetes de Venta")
-    num_orders=aggregate_orders(cnn,shipping_list)
-    print("Ordenes Insertados",num_orders)
-#consulta_shipping_details(cnn,access_token)
+    print("Creating sale Packages")
+    aggregate_orders(cnn,shipping_list)
 client.close()
