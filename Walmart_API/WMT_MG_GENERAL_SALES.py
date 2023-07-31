@@ -44,3 +44,4 @@ result_general_WMT,WMT_Total=importar_historico_WMT(cnn,mes_inicial,mes_final)
 print(result_general_WMT)
 print(WMT_Total)
 
+#
