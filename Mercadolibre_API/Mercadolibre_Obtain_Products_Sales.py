@@ -9,7 +9,7 @@ from dotenv import load_dotenv, set_key
 import os
 load_dotenv()
 from pymongo import UpdateOne
-#Obtiene credentiales
+#Obtain credentials
 access_token =os.environ.get('Token_MLB')
 seller_id=os.environ.get('MLB_Seller_ID')
 #Obtiene el enlace de conexion a Mongo DB,ya sea local o al cluster
