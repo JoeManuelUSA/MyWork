@@ -21,7 +21,7 @@ MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
 client = MongoClient(MongoOnlineConnection)
 cnn1 = client["GAON_MLB"]
 cnn2= client['GAON_WMT']
-def import_historic_MLB(cnn,mes_inicial, mes_final):
+def import_historic_MLB(cnn,mes_inicial, mes_final):#Imports MercadoLibre sales by month
     collection = cnn["Sale_Detail_Package"]
     pipeline_month = [
         # First stage: filter the documents
@@ -58,7 +58,7 @@ def import_historic_MLB(cnn,mes_inicial, mes_final):
         a += total_quantity
         results_list.append((year, month, total_quantity))
     return results_list, a
-def import_historic_WMT(cnn,mes_inicial, mes_final):
+def import_historic_WMT(cnn,mes_inicial, mes_final):#Imports Wallmart sales by month
     collection = cnn["Sale_Detail_Package"]
     pipeline_month = [
         # First stage: filter the documents
@@ -90,7 +90,7 @@ def import_historic_WMT(cnn,mes_inicial, mes_final):
         a += total_quantity
         results_list.append((year, month, total_quantity))
     return results_list, a
-def regression_lineal(lista_cantidad,rango_meses):
+def regression_lineal(lista_cantidad,rango_meses):#Linear Regression Model
     #print("El promedio final del historico es: " + str(promedio))
     dia_prueba = []
     for i in range(rango_meses):
@@ -214,9 +214,9 @@ def regression_lineal(lista_cantidad,rango_meses):
     # Now you can return the HTML string
 
     return lista,fig_html
-def modelo_no_lineal(x, a, b, c, d):
+def modelo_no_lineal(x, a, b, c, d):#NonLinear Model
     return a * x ** 3 + b * x ** 2 + c * x + d  # Cubic
-def regression_no_lineal(lista_cantidad,rango_meses):
+def regression_no_lineal(lista_cantidad,rango_meses):#NonLinear Model
     historico = np.array(([item[2] for item in lista_cantidad]))
     total = np.sum(historico)
     #print(f"Total de {rango_dias} dias:", total)
@@ -350,20 +350,18 @@ def regression_no_lineal(lista_cantidad,rango_meses):
     plt.show()
     #return listas,fig_html
     return Tendencia
-mes_inicial=datetime(2023,1,1)
-mes_final=datetime(2023,7,1)
+mes_inicial=datetime(2023,1,1) #Start Date 
+mes_final=datetime(2023,7,1)#End Date
 rango_meses=6
 dias = 2
 dias_predict = dias - 1
-result_general_MLB,MLB_Total=importar_historico_MLB(cnn1,mes_inicial,mes_final)
-result_general_WMT,WMT_Total=importar_historico_WMT(cnn2,mes_inicial,mes_final)
-print(result_general_MLB)
-print(MLB_Total)
-Tendencia_MLB=regression_no_lineal(result_general_MLB,rango_meses)
-print(Tendencia_MLB)
-#regression_lineal(result_general_MLB,rango_meses)
-Tendencia_WMT=regression_no_lineal(result_general_WMT,rango_meses)
-print(Tendencia_WMT)
-#regression_lineal(result_general_WMT,rango_meses)
-print(result_general_WMT)
-print(WMT_Total)
+
+result_general_MLB,MLB_Total=import_historic_MLB(cnn1,mes_inicial,mes_final)#Obtains MLB Sale Data by date 
+Tendencia_MLB=regression_no_lineal(result_general_MLB,rango_meses)#Uses a Nonlinear model for forecast of sales
+regression_lineal(result_general_MLB,rango_meses)#Uses a linear model for forecast of sales
+print(Tendencia_MLB)#Will print if the trend is upwards or downwards
+
+result_general_WMT,WMT_Total=import_historic_WMT(cnn2,mes_inicial,mes_final)#Obtains WMT Sale Data by date
+Tendencia_WMT=regression_no_lineal(result_general_WMT,rango_meses)#Uses a Nonlinear model for forecast of sales
+regression_lineal(result_general_WMT,rango_meses)#Uses a linear model for forecast of sales
+print(Tendencia_WMT)#Will print if the trend is upwards or downwards
