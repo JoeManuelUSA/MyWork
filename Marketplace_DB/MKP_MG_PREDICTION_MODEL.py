@@ -285,12 +285,10 @@ mes_final=datetime(2023,7,1)#End Date
 rango_meses=6
 dias = 2
 dias_predict = dias - 1
-
 result_general_MLB,MLB_Total=import_historic_MLB(cnn1,mes_inicial,mes_final)#Obtains MLB Sale Data by date 
 Tendencia_MLB=regression_no_lineal(result_general_MLB,rango_meses)#Uses a Nonlinear model for forecast of sales
 regression_lineal(result_general_MLB,rango_meses)#Uses a linear model for forecast of sales
 print(Tendencia_MLB)#Will print if the trend is upwards or downwards
-
 result_general_WMT,WMT_Total=import_historic_WMT(cnn2,mes_inicial,mes_final)#Obtains WMT Sale Data by date
 Tendencia_WMT=regression_no_lineal(result_general_WMT,rango_meses)#Uses a Nonlinear model for forecast of sales
 regression_lineal(result_general_WMT,rango_meses)#Uses a linear model for forecast of sales
