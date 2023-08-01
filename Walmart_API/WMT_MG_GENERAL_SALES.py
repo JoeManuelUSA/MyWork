@@ -1,5 +1,5 @@
 #This code obtains the general sales by month of Walmart
-#The sales data is obtianed from MongoDB
+#The sales data is obtained from MongoDB
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from dotenv import load_dotenv

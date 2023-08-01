@@ -1,5 +1,5 @@
-#This code obtains the general sales by month of MercadoLibre
-#The sales data is obtianed from MongoDB
+#This code obtains the general sales of MercadoLibre
+#The sales data is obtained from MongoDB
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from dateutil.parser import parse
@@ -11,14 +11,14 @@ load_dotenv()
 MongoOnlineConnection=os.environ.get('MongoOnlineConnectionString')
 client = MongoClient(f"{MongoOnlineConnection}")
 cnn = client["GAON_MLB"]
-def importar_historic_MLB(cnn,mes_inicial, mes_final):#function for obtaining sales by month
+def importar_historic_MLB(cnn,mes_inicial, mes_final):#function for obtaining sales by date
     collection = cnn["Sale_Detail_Package"]#Selects collection from Mongo DB
     pipeline_month = [
         # First stage: filter the documents
         {
             "$match": {"Date_Created": {"$gte": mes_inicial, "$lte": mes_final}}
         },
-        # Second stage: group by month and sum up the quantities
+        # Second stage: group information 
         {
             "$project": {
                 "_id": 1,
@@ -31,7 +31,7 @@ def importar_historic_MLB(cnn,mes_inicial, mes_final):#function for obtaining sa
     result_month = collection.aggregate(pipeline_month)#Executes pipeline
     results_list = []
     a = 0
-    for doc in result_month:#Obtains the information for each month
+    for doc in result_month:#Obtains the information for each sale
         Shipping_ID = doc["_id"]
         Status = doc["Status"]
         Date_Created = doc["Date_Created"]
@@ -41,5 +41,5 @@ def importar_historic_MLB(cnn,mes_inicial, mes_final):#function for obtaining sa
     return results_list #returns list
 mes_inicial=datetime(2023,1,1)#Start date
 mes_final=datetime(2023,5,1)#End Date
-#Obtains sales by month using start and end date
+#Obtains sales using start and end date
 result_general=importar_historic_MLB(cnn,mes_inicial,mes_final)
