@@ -91,59 +91,22 @@ def import_historic_WMT(cnn,mes_inicial, mes_final):#Imports Wallmart sales by m
         results_list.append((year, month, total_quantity))
     return results_list, a
 def regression_lineal(lista_cantidad,rango_meses):#Linear Regression Model
-    #print("El promedio final del historico es: " + str(promedio))
     dia_prueba = []
+    #Generate List
     for i in range(rango_meses):
         dia_prueba.append(i + 1)
     dia = np.array(dia_prueba)
+    #Generate Sale List
     Px = np.array([item[2] for item in lista_cantidad])
+    #LinearModel
     model = LinearRegression()
     model.fit(dia.reshape(-1, 1), Px)
+    #Test List
     test = np.array([rango_meses + dias_predict])
     sum_predict = 0
-    sum_real = 0
     pronostico = []
-    for aux in range(dias):
-        test_aux = np.array([rango_meses + aux])
-        PL = model.predict(test_aux.reshape(-1, 1))
-        PLfinal = float(np.round(PL, 2))
-        print(f"Pronóstico Lineal de {aux + rango_meses + 1} dias: " + str(PLfinal))
-        pronostico.append(PLfinal)
-        sum_predict += PLfinal
-    test_aux = np.array([rango_meses])
     PL = model.predict(test_aux.reshape(-1, 1))
     PLfinal = float(np.round(PL, 2))
-    print(f"Pronostico total de {dias} dias: ", sum_predict)
-    print(f"Ventas Real de {dias} dias: ", sum_real)
-    print(f"Pronóstico Lineal de {rango_meses + 1} dias: " + str(PLfinal))
-    # Promedio de 21 dias
-    SumPx = np.sum(Px)
-    #print(SumPx)
-    promPx = SumPx / rango_meses
-    # promPx = SumPx / 21
-    print(f"Promedio de {rango_meses} dias: " + str(promPx))
-    # CP_prueba=promPx/PLfinal
-    # print(CP_prueba)
-    # Cambio Porcentual
-    # CP = int(np.round(promPx / PLfinal))
-    # print("Cambio Porcentual:", CP)
-    try:
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        CP = np.round(promPx / PLfinal)
-        porcentajeCP = CP * 0.3
-        print("Cambio Porcentual:", CP)
-        print("Porcentaje:", porcentajeCP)
-        if PLfinal < 0 and CP > -40:
-            print('Baja')
-        elif CP > 40:
-            print('Alta')
-        elif CP > 0 or CP < 40:
-            print('Media')
-        else:
-            print('Media alta')
-    except Exception as e:
-        print(f"No hay ventas en los ultimos {rango_meses} dias")
-        print("Error:", e)
     predicciones_lineales = model.predict(dia.reshape(-1, 1))
     n = 0
     lista_lineal = []
@@ -152,6 +115,7 @@ def regression_lineal(lista_cantidad,rango_meses):#Linear Regression Model
     scatter = plt.scatter(dia, Px, c=colors)
     future_days = np.array([i for i in range(rango_meses, rango_meses + dias)])
     future_sales = model.predict(future_days.reshape(-1, 1))
+    #Generates Graph
     plt.scatter(dia, Px, c=colors)
     plt.plot(dia, model.predict(dia.reshape(-1, 1)), color='red')
     plt.scatter(future_days, future_sales, color='red', linestyle='dashed')
@@ -209,18 +173,13 @@ def regression_lineal(lista_cantidad,rango_meses):#Linear Regression Model
         ))
     # Save to HTML
     fig_html = to_html(fig, full_html=False)
-    #fig.show()
     plt.show()
-    # Now you can return the HTML string
-
     return lista,fig_html
 def modelo_no_lineal(x, a, b, c, d):#NonLinear Model
     return a * x ** 3 + b * x ** 2 + c * x + d  # Cubic
-def regression_no_lineal(lista_cantidad,rango_meses):#NonLinear Model
+def regression_no_lineal(lista_cantidad,rango_meses):#NonLinear Model function that indicates if trend is upwards or downwards
     historico = np.array(([item[2] for item in lista_cantidad]))
     total = np.sum(historico)
-    #print(f"Total de {rango_dias} dias:", total)
-    # Promedio final del historico
     promedio = total / len(([item[2] for item in lista_cantidad]))
     mes_prueba = []
     for i in range(rango_meses):
@@ -234,49 +193,22 @@ def regression_no_lineal(lista_cantidad,rango_meses):#NonLinear Model
     try:
         popt, pcov = curve_fit(modelo_no_lineal, mes, ventas)
         for i in range(dias):
-            test = np.array([rango_meses + i])  # dias_prediccion
+            test = np.array([rango_meses + i])
             PL = modelo_no_lineal(test, *popt)
             PLfinal = float(np.round(PL, 2))
-            PLfinal_list.append(PLfinal)
-            PLfinalsum += PLfinal
-            #print(f"Pronóstico no lineal de {i + 1} dias: ", PLfinal)
-        #print(f"Pronostico total de ventas a {i + 1} dias: ", PLfinalsum)
-        #print(f"Ventas Reales de {i + 1} dias: ", real_suma)
-        test = np.array([rango_meses + dias_predict])  # dias_prediccion
-        if PLfinal>=ventas[-1]:Tendencia=True
-        if PLfinal< ventas[-1]: Tendencia = False
+        test = np.array([rango_meses + dias_predict]) 
+        #Checks if trend is upwards or downwards
+        if PLfinal>=ventas[-1]:Tendencia=True#True if upwards
+        if PLfinal< ventas[-1]: Tendencia = False#False if downwards
         PL = modelo_no_lineal(test, *popt)
         PLfinal = float(np.round(PL, 2))
-        #print(f"Pronóstico no lineal de {dias} dias: ", PLfinal)
         predicciones_no_lineales = modelo_no_lineal(mes, *popt)
         mse_no_lineal = mean_squared_error(ventas, predicciones_no_lineales)
-        #print("MSE del modelo no lineal: ", mse_no_lineal)
     except Exception as e:
-        test = np.array([rango_meses + dias_predict])  # dias_prediccion
+        test = np.array([rango_meses + dias_predict])
         PL = 0
         print(e)
-    # Promedio de 21 dias
-    SumPx = np.sum(ventas)
-    promedioProducto = SumPx / rango_meses
-    #print(f"Promedio de {rango_meses} dias:", promedioProducto)
-    """
-    try:
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        CP = int(np.round(promedioProducto / PLfinal))
-        print("Cambio Porcentual:", CP)
-        # Tendencia
-        if PLfinal < 0 and CP > -40:
-            print("Baja")
-        elif CP > 40:
-            print("Alta")
-        elif CP > 0 or CP < 40:
-            print("Media")
-        else:
-            print("Media alta")
-    except Exception as e:
-        print(f"No hay ventas en los ultimos {rango_meses} dias")
-    """
-        # print("Error:", e)
+    #generates graph
     fig, ax = plt.subplots()
     ax.plot(historico, label='Historico')
     colors = ['green' if item[2] == 1 else 'blue' for item in lista_cantidad]
@@ -346,9 +278,7 @@ def regression_no_lineal(lista_cantidad,rango_meses):#NonLinear Model
         ))
     # Convert plotly figure to HTML
     fig_html = to_html(fig, full_html=False)
-    #fig.show()
     plt.show()
-    #return listas,fig_html
     return Tendencia
 mes_inicial=datetime(2023,1,1) #Start Date 
 mes_final=datetime(2023,7,1)#End Date
